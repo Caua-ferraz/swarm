@@ -1,5 +1,6 @@
 import inspect
 from datetime import datetime
+from collections import defaultdict
 
 
 def debug_print(debug: bool, *args: str) -> None:
@@ -13,8 +14,9 @@ def debug_print(debug: bool, *args: str) -> None:
 def merge_fields(target, source):
     for key, value in source.items():
         if isinstance(value, str):
-            target[key] += value
+            target[key] = target.get(key, '') + value
         elif value is not None and isinstance(value, dict):
+            target[key] = defaultdict(str, target.get(key, {}))
             merge_fields(target[key], value)
 
 
@@ -59,12 +61,7 @@ def function_to_json(func) -> dict:
 
     parameters = {}
     for param in signature.parameters.values():
-        try:
-            param_type = type_map.get(param.annotation, "string")
-        except KeyError as e:
-            raise KeyError(
-                f"Unknown type annotation {param.annotation} for parameter {param.name}: {str(e)}"
-            )
+        param_type = type_map.get(param.annotation, "string")
         parameters[param.name] = {"type": param_type}
 
     required = [

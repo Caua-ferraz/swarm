@@ -28,6 +28,7 @@ class Swarm:
         if not client:
             client = OpenAI()
         self.client = client
+        self.function_map_cache = {}
 
     def get_chat_completion(
         self,
@@ -93,7 +94,12 @@ class Swarm:
         context_variables: dict,
         debug: bool,
     ) -> Response:
-        function_map = {f.__name__: f for f in functions}
+        # Cache the function map based on the functions' identities
+        functions_key = tuple(id(f) for f in functions)
+        if functions_key not in self.function_map_cache:
+            self.function_map_cache[functions_key] = {f.__name__: f for f in functions}
+        function_map = self.function_map_cache[functions_key]
+        
         partial_response = Response(
             messages=[], agent=None, context_variables={})
 
